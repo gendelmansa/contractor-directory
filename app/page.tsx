@@ -127,8 +127,8 @@ export default function Home() {
                 const res = await fetch(API_BASE_URL + '?' + params);
                 if (!res.ok) throw new Error((await res.json()).message || 'Error');
                 const result = await res.json();
-                let contractors = result.data || [];
-                if (userLat && userLng) contractors = contractors.filter(c => c.latitude && c.longitude && calculateDistance(userLat, userLng, c.latitude, c.longitude) <= r).map(c => ({...c, distance: calculateDistance(userLat, userLng, c.latitude, c.longitude)})).sort((a,b) => a.distance - b.distance);
+        let contractors = result.data || [];
+                if (!contractors.length) { lg.innerHTML = '<div class="no-results"><p>No contractors found. Try expanding your search.</p></div>'; return; }
                 rc.textContent = contractors.length + ' contractor' + (contractors.length !== 1 ? 's' : '') + ' found';
                 if (!contractors.length) { lg.innerHTML = '<div class="no-results"><p>No contractors found. Try expanding your search.</p></div>'; return; }
                 lg.innerHTML = contractors.map(c => '<div class="listing-card"><div class="listing-name">' + escapeHtml(c.name) + '</div><div class="listing-services"><span class="service-tag">' + escapeHtml(c.category) + '</span></div>' + (c.rating ? '<div class="listing-rating">' + formatRating(c.rating) + (c.review_count ? ' (' + c.review_count + ')' : '') + '</div>' : '') + (c.distance ? '<div class="listing-distance">📍 ' + c.distance.toFixed(1) + ' miles</div>' : '') + '<div class="listing-address">' + escapeHtml(c.address || '') + (c.city ? ', ' + escapeHtml(c.city) : '') + (c.state ? ', ' + escapeHtml(c.state) : '') + '</div>' + (c.phone ? '<div class="listing-phone">📞 ' + escapeHtml(c.phone) + '</div>' : '') + '</div>').join('');
@@ -137,6 +137,9 @@ export default function Home() {
         
         document.getElementById('useLocationBtn').addEventListener('click', getUserLocation);
         document.getElementById('searchForm').addEventListener('submit', (e) => { e.preventDefault(); searchContractors(); });
+        
+        // Load all contractors by default on page load
+        searchContractors();
     </script>
 </body>
 </html>`;
