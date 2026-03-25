@@ -25,9 +25,8 @@ export async function GET(request: NextRequest) {
         }
         
         return NextResponse.json({ 
-            success: true, 
-            count: data?.length || 0,
-            contractors: data 
+            data: data,
+            count: data?.length || 0
         });
     } catch (err: any) {
         return NextResponse.json({
