@@ -4,39 +4,39 @@ import { getSupabase } from '@/lib/supabase';
 export async function GET(request: NextRequest) {
     try {
         const supabase = getSupabase();
+        const { searchParams } = new URL(request.url);
+        const limit = parseInt(searchParams.get('limit') || '50');
+        const category = searchParams.get('category');
+        const query = searchParams.get('query');
         
-        const { data, error } = await supabase
+        let dbQuery = supabase
             .from('contractors')
-            .select('id, name, category, address, city, state, zip_code, rating')
-            .limit(5);
+            .select('id, name, category, address, city, state, zip_code, rating, phone')
+            .limit(Math.min(limit, 100));
+        
+        if (category) {
+            dbQuery = dbQuery.eq('category', category);
+        }
+        
+        if (query) {
+            dbQuery = dbQuery.or(`name.ilike.%${query}%,address.ilike.%${query}%`);
+        }
+        
+        const { data, error } = await dbQuery;
         
         if (error) {
             return NextResponse.json({
-                source: 'getSupabase',
-                error: error.message,
-                code: error.code,
-                details: error.details,
-                hint: error.hint,
-                envCheck: {
-                    url: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'SET' : 'NOT_SET',
-                    key: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'SET' : 'NOT_SET'
-                }
+                error: error.message
             }, { status: 500 });
         }
-        
+
         return NextResponse.json({ 
             data: data,
             count: data?.length || 0
         });
     } catch (err: any) {
         return NextResponse.json({
-            source: 'catch',
-            error: err.message,
-            stack: err.stack?.slice(0, 500),
-            envCheck: {
-                url: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'SET' : 'NOT_SET',
-                key: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'SET' : 'NOT_SET'
-            }
+            error: err.message
         }, { status: 500 });
     }
 }
