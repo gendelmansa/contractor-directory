@@ -170,6 +170,16 @@
             font-weight: 600;
         }
         
+        .listing-rating {
+            color: #6b7280;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .listing-rating .stars {
+            color: #f59e0b;
+        }
+        
         .listing-distance {
             color: #6b7280;
             font-size: 0.875rem;
@@ -189,6 +199,12 @@
             font-weight: 600;
         }
         
+        .listing-source {
+            font-size: 0.75rem;
+            color: #9ca3af;
+            margin-top: 0.5rem;
+        }
+        
         .no-results {
             text-align: center;
             padding: 3rem;
@@ -199,6 +215,14 @@
             text-align: center;
             padding: 2rem;
             color: #6b7280;
+        }
+        
+        .error-message {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
         }
         
         @media (max-width: 768px) {
@@ -266,6 +290,8 @@
             </form>
         </div>
         
+        <div class="error-message" id="errorMessage" style="display: none;"></div>
+        
         <div class="results-header">
             <span class="results-count" id="resultsCount"></span>
         </div>
@@ -278,27 +304,15 @@
     </div>
 
     <script>
-        // Sample contractor data (in production, this would come from a database/API)
-        const contractors = [
-            { name: "Quick Fix Plumbing", services: ["plumber"], phone: "(555) 123-4567", address: "123 Main St, Springfield", lat: 40.7128, lng: -74.0060 },
-            { name: "Spark Electric", services: ["electrician"], phone: "(555) 234-5678", address: "456 Oak Ave, Springfield", lat: 40.7580, lng: -73.9855 },
-            { name: "Cool Air Pros", services: ["hvac"], phone: "(555) 345-6789", address: "789 Elm St, Springfield", lat: 40.7282, lng: -73.7949 },
-            { name: "Top Roof Solutions", services: ["roofer"], phone: "(555) 456-7890", address: "321 Pine Rd, Springfield", lat: 40.6892, lng: -74.0445 },
-            { name: "Green Gardens", services: ["landscaper"], phone: "(555) 567-8901", address: "654 Maple Dr, Springfield", lat: 40.7489, lng: -73.9680 },
-            { name: "Color Splash Painters", services: ["painter"], phone: "(555) 678-9012", address: "987 Cedar Ln, Springfield", lat: 40.7614, lng: -73.9776 },
-            { name: "Wood Works carpentry", services: ["carpenter"], phone: "(555) 789-0123", address: "147 Birch St, Springfield", lat: 40.7831, lng: -73.9712 },
-            { name: "Sparkling Clean Services", services: ["cleaner"], phone: "(555) 890-1234", address: "258 Walnut Ave, Springfield", lat: 40.7589, lng: -73.9851 },
-            { name: "Mario's Plumbing", services: ["plumber"], phone: "(555) 901-2345", address: "369 Spruce Way, Springfield", lat: 40.7061, lng: -74.0089 },
-            { name: "Bright Light Electric", services: ["electrician"], phone: "(555) 012-3456", address: "741 Ash Blvd, Springfield", lat: 40.7414, lng: -74.0018 },
-            { name: "Elite HVAC Systems", services: ["hvac"], phone: "(555) 111-2222", address: "852 Cherry Ct, Springfield", lat: 40.7292, lng: -73.8012 },
-            { name: "Reliable Rooftop Experts", services: ["roofer"], phone: "(555) 222-3333", address: "963 Willow St, Springfield", lat: 40.7023, lng: -74.0156 }
-        ];
+        // Configuration - Update these for your deployment
+        const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api/contractors';
         
         let userLat = null;
         let userLng = null;
         
         // Calculate distance between two points (Haversine formula)
         function calculateDistance(lat1, lng1, lat2, lng2) {
+            if (!lat2 || !lng2) return null;
             const R = 3959; // Earth's radius in miles
             const dLat = (lat2 - lat1) * Math.PI / 180;
             const dLng = (lng2 - lng1) * Math.PI / 180;
@@ -337,66 +351,102 @@
             );
         }
         
-        // Search contractors
-        function searchContractors() {
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            if (text === null || text === undefined) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Format rating stars
+        function formatRating(rating) {
+            if (!rating) return '';
+            const stars = '★'.repeat(Math.floor(rating)) + '☆'.repeat(5 - Math.floor(rating));
+            return `<span class="stars">${stars}</span> (${rating.toFixed(1)})`;
+        }
+        
+        // Search contractors via API
+        async function searchContractors() {
             const serviceType = document.getElementById('serviceType').value;
-            const companyName = document.getElementById('companyName').value.toLowerCase();
+            const companyName = document.getElementById('companyName').value;
             const radius = parseInt(document.getElementById('radius').value);
             const resultsCount = document.getElementById('resultsCount');
             const listingsGrid = document.getElementById('listingsGrid');
+            const errorMessage = document.getElementById('errorMessage');
             
-            // Filter contractors
-            let results = contractors.filter(c => {
-                // Filter by service type
-                if (serviceType && !c.services.includes(serviceType)) {
-                    return false;
+            // Show loading state
+            errorMessage.style.display = 'none';
+            listingsGrid.innerHTML = '<div class="loading">Loading contractors...</div>';
+            
+            try {
+                // Build query parameters
+                const params = new URLSearchParams();
+                if (serviceType) params.append('category', serviceType);
+                if (companyName) params.append('query', companyName);
+                if (userLat && userLng) {
+                    params.append('lat', userLat.toString());
+                    params.append('lng', userLng.toString());
+                    params.append('radius', radius.toString());
+                }
+                params.append('limit', '50');
+                
+                const response = await fetch(`${API_BASE_URL}?${params.toString()}`);
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || `HTTP error ${response.status}`);
                 }
                 
-                // Filter by company name
-                if (companyName && !c.name.toLowerCase().includes(companyName)) {
-                    return false;
+                const result = await response.json();
+                let contractors = result.data || [];
+                
+                // Filter by distance if needed (API does some, but we do final filter)
+                if (userLat && userLng) {
+                    contractors = contractors.filter(c => {
+                        if (!c.latitude || !c.longitude) return false;
+                        const distance = calculateDistance(userLat, userLng, c.latitude, c.longitude);
+                        c.distance = distance;
+                        return distance <= radius;
+                    }).sort((a, b) => a.distance - b.distance);
                 }
                 
-                // Filter by distance if user location is set
-                if (userLat !== null && userLng !== null) {
-                    const distance = calculateDistance(userLat, userLng, c.lat, c.lng);
-                    c.distance = distance;
-                    if (distance > radius) {
-                        return false;
-                    }
+                // Display results
+                resultsCount.textContent = `${contractors.length} contractor${contractors.length !== 1 ? 's' : ''} found`;
+                
+                if (contractors.length === 0) {
+                    listingsGrid.innerHTML = `
+                        <div class="no-results">
+                            <p>No contractors found matching your criteria. Try expanding your search radius or changing your filters.</p>
+                        </div>
+                    `;
+                    return;
                 }
                 
-                return true;
-            });
-            
-            // Sort by distance if available
-            if (userLat !== null && userLng !== null) {
-                results.sort((a, b) => a.distance - b.distance);
-            }
-            
-            // Display results
-            resultsCount.textContent = `${results.length} contractor${results.length !== 1 ? 's' : ''} found`;
-            
-            if (results.length === 0) {
+                listingsGrid.innerHTML = contractors.map(c => `
+                    <div class="listing-card">
+                        <div class="listing-name">${escapeHtml(c.name)}</div>
+                        <div class="listing-services">
+                            <span class="service-tag">${escapeHtml(c.category)}</span>
+                        </div>
+                        ${c.rating ? `<div class="listing-rating">${formatRating(c.rating)}${c.review_count ? ` (${c.review_count} reviews)` : ''}</div>` : ''}
+                        ${c.distance !== undefined ? `<div class="listing-distance">📍 ${c.distance.toFixed(1)} miles away</div>` : ''}
+                        <div class="listing-address">${escapeHtml(c.address)}${c.city ? `, ${escapeHtml(c.city)}` : ''}${c.state ? `, ${escapeHtml(c.state)}` : ''}${c.zip_code ? ` ${escapeHtml(c.zip_code)}` : ''}</div>
+                        ${c.phone ? `<div class="listing-phone">📞 ${escapeHtml(c.phone)}</div>` : ''}
+                        ${c.source ? `<div class="listing-source">Source: ${escapeHtml(c.source)}</div>` : ''}
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Search error:', error);
+                errorMessage.textContent = `Error: ${error.message}`;
+                errorMessage.style.display = 'block';
                 listingsGrid.innerHTML = `
                     <div class="no-results">
-                        <p>No contractors found matching your criteria. Try expanding your search radius or changing your filters.</p>
+                        <p>Unable to load contractors. Please try again later.</p>
                     </div>
                 `;
-                return;
             }
-            
-            listingsGrid.innerHTML = results.map(c => `
-                <div class="listing-card">
-                    <div class="listing-name">${c.name}</div>
-                    <div class="listing-services">
-                        ${c.services.map(s => `<span class="service-tag">${s}</span>`).join('')}
-                    </div>
-                    ${c.distance !== undefined ? `<div class="listing-distance">📍 ${c.distance.toFixed(1)} miles away</div>` : ''}
-                    <div class="listing-address">${c.address}</div>
-                    <div class="listing-phone">📞 ${c.phone}</div>
-                </div>
-            `).join('');
         }
         
         // Event listeners
