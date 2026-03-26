@@ -42,7 +42,7 @@ async function getReviews(id: string): Promise<Review[]> {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
-  const { data } = await supabase.from('reviews').select('*').eq('contractor_id', parseInt(id)).order('created_at', { ascending: false }).limit(10);
+  const { data } = await supabase.from('reviews').select('*').eq('contractor_id', id).order('created_at', { ascending: false }).limit(10);
   return data || [];
 }
 

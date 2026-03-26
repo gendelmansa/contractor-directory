@@ -4,7 +4,7 @@ import { useState, useEffect, FormEvent } from 'react';
 import Link from 'next/link';
 
 interface Contractor {
-  id: number;
+  id: string;
   name: string;
   category: string;
   address: string;
@@ -14,7 +14,7 @@ interface Contractor {
   rating: number;
   review_count: number;
   phone: string;
-  logo: string;
+  logo: string | null;
 }
 
 export default function Home() {
