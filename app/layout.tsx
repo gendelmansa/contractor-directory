@@ -10,9 +10,6 @@ export const metadata: Metadata = {
     type: 'website',
     url: 'https://michigan-contractors.com',
   },
-  verification: {
-    google: 'google-site-verification-code',
-  },
 };
 
 export default function RootLayout({
