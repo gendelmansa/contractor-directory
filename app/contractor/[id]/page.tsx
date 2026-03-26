@@ -25,6 +25,8 @@ export default function ContractorPage() {
   const [contractor, setContractor] = useState<Contractor | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -38,6 +40,21 @@ export default function ContractorPage() {
           setError('Contractor not found');
         } else {
           setContractor(data.data);
+          // Fetch reviews from Google
+          if (data.data.name) {
+            setReviewsLoading(true);
+            try {
+              const reviewsResp = await fetch(`/api/contractors/reviews?name=${encodeURIComponent(data.data.name)}&city=${encodeURIComponent(data.data.city || '')}`);
+              const reviewsData = await reviewsResp.json();
+              if (reviewsData.reviews) {
+                setReviews(reviewsData.reviews);
+              }
+            } catch (e) {
+              console.error('Failed to load reviews:', e);
+            } finally {
+              setReviewsLoading(false);
+            }
+          }
         }
       } catch (e) {
         setError('Failed to load contractor');
@@ -53,9 +70,6 @@ export default function ContractorPage() {
     plumber: '🔧', electrician: '⚡', hvac: '❄️', roofer: '🏗️', 
     landscaper: '🌳', painter: '🎨', carpenter: '🪚', cleaner: '🧹' 
   };
-
-  // No reviews in database yet
-  const sampleReviews: any[] = [];
 
   if (loading) {
     return (
@@ -176,12 +190,14 @@ export default function ContractorPage() {
         <div className="main-content">
           <div className="section">
             <h2 className="section-title">💬 Customer Reviews</h2>
-            {sampleReviews.length === 0 ? (
+            {reviewsLoading ? (
+              <p className="no-reviews">Loading reviews from Google...</p>
+            ) : reviews.length === 0 ? (
               <p className="no-reviews">No reviews yet.</p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {sampleReviews.map(review => (
-                  <div key={review.id} style={{ padding: '1rem', border: '1px solid var(--gray-200)', borderRadius: '12px', transition: 'all 0.2s' }}>
+                {reviews.map((review, idx) => (
+                  <div key={idx} style={{ padding: '1rem', border: '1px solid var(--gray-200)', borderRadius: '12px', transition: 'all 0.2s' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                       <span style={{ fontWeight: '600', color: 'var(--gray-800)' }}>{review.author}</span>
                       <span style={{ fontSize: '0.85rem', color: 'var(--gray-500)' }}>{review.date}</span>
