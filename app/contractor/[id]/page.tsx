@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { Metadata } from 'next';
 
 interface Contractor {
-  id: number;
+  id: string;
   name: string;
   category: string;
   address: string;
@@ -13,8 +13,7 @@ interface Contractor {
   rating: number;
   review_count: number;
   phone: string;
-  website: string;
-  logo: string;
+  website: string | null;
 }
 
 interface Review {
@@ -37,13 +36,18 @@ async function getContractor(id: string): Promise<Contractor | null> {
 }
 
 async function getReviews(id: string): Promise<Review[]> {
-  const { createClient } = await import('@supabase/supabase-js');
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-  const { data } = await supabase.from('reviews').select('*').eq('contractor_id', id).order('created_at', { ascending: false }).limit(10);
-  return data || [];
+  try {
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+    const { data } = await supabase.from('reviews').select('*').eq('contractor_id', id).order('created_at', { ascending: false }).limit(10);
+    return data || [];
+  } catch (e) {
+    console.error('Error loading reviews:', e);
+    return [];
+  }
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -148,7 +152,7 @@ export default async function ContractorPage({ params }: { params: Promise<{ id:
       <section className="hero">
         <div className="hero-content">
           <div className="logo-container">
-            {contractor.logo ? <img src={contractor.logo} alt={`${contractor.name} logo`} /> : <span className="logo-placeholder">{categoryIcons[contractor.category] || '🏢'}</span>}
+            <span className="logo-placeholder">{categoryIcons[contractor.category] || '🏢'}</span>
           </div>
           <div className="contractor-info">
             <div className="contractor-category">{categoryIcons[contractor.category] || '🏢'} {contractor.category}</div>
@@ -166,7 +170,7 @@ export default async function ContractorPage({ params }: { params: Promise<{ id:
       <div className="action-bar">
         <div className="action-bar-inner">
           <a href={`tel:${contractor.phone}`} className="btn btn-primary">📞 Call Now</a>
-          {contractor.website && <a href={contractor.website} target="_blank" rel="noopener noreferrer" className="btn btn-secondary">🌐 Website</a>}
+          {contractor.website && contractor.website.length > 0 && <a href={contractor.website} target="_blank" rel="noopener noreferrer" className="btn btn-secondary">🌐 Website</a>}
           <button className="btn btn-primary" onClick={() => window.location.href = '/#listings'}>📝 Write Review</button>
         </div>
       </div>
