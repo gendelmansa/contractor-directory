@@ -54,14 +54,8 @@ export default function ContractorPage() {
     landscaper: '🌳', painter: '🎨', carpenter: '🪚', cleaner: '🧹' 
   };
 
-  // Sample reviews for demo (in production, fetch from database)
-  const sampleReviews = [
-    { id: 1, author: 'John D.', rating: 5, date: '2025-12-15', text: 'Excellent service! Very professional and completed the job on time. Would highly recommend to anyone looking for quality work.' },
-    { id: 2, author: 'Sarah M.', rating: 5, date: '2025-11-28', text: 'Great experience from start to finish. The team was knowledgeable, friendly, and reasonably priced. Will definitely use again.' },
-    { id: 3, author: 'Mike R.', rating: 4, date: '2025-10-20', text: 'Good work overall. Showed up on time and finished the project as discussed. Minor scheduling delays but overall satisfied.' },
-    { id: 4, author: 'Emily K.', rating: 5, date: '2025-09-05', text: 'Outstanding craftsmanship! They went above and beyond to ensure everything was perfect. Highly recommended!' },
-    { id: 5, author: 'David L.', rating: 4, date: '2025-08-12', text: 'Very reliable and trustworthy. Provided fair estimates and communicated throughout the project. Would hire again.' },
-  ];
+  // No reviews in database yet
+  const sampleReviews: any[] = [];
 
   if (loading) {
     return (
@@ -182,18 +176,22 @@ export default function ContractorPage() {
         <div className="main-content">
           <div className="section">
             <h2 className="section-title">💬 Customer Reviews</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {sampleReviews.map(review => (
-                <div key={review.id} style={{ padding: '1rem', border: '1px solid var(--gray-200)', borderRadius: '12px', transition: 'all 0.2s' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                    <span style={{ fontWeight: '600', color: 'var(--gray-800)' }}>{review.author}</span>
-                    <span style={{ fontSize: '0.85rem', color: 'var(--gray-500)' }}>{review.date}</span>
+            {sampleReviews.length === 0 ? (
+              <p className="no-reviews">No reviews yet.</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {sampleReviews.map(review => (
+                  <div key={review.id} style={{ padding: '1rem', border: '1px solid var(--gray-200)', borderRadius: '12px', transition: 'all 0.2s' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                      <span style={{ fontWeight: '600', color: 'var(--gray-800)' }}>{review.author}</span>
+                      <span style={{ fontSize: '0.85rem', color: 'var(--gray-500)' }}>{review.date}</span>
+                    </div>
+                    <div style={{ color: 'var(--warning)', fontSize: '0.95rem', letterSpacing: '1px', marginBottom: '0.5rem' }}>{'★'.repeat(review.rating)}</div>
+                    <p style={{ color: 'var(--gray-600)', fontSize: '0.95rem', lineHeight: '1.6' }}>{review.text}</p>
                   </div>
-                  <div style={{ color: 'var(--warning)', fontSize: '0.95rem', letterSpacing: '1px', marginBottom: '0.5rem' }}>{'★'.repeat(review.rating)}</div>
-                  <p style={{ color: 'var(--gray-600)', fontSize: '0.95rem', lineHeight: '1.6' }}>{review.text}</p>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
