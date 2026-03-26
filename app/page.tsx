@@ -336,7 +336,7 @@ export default function Home() {
               <Link href={`/contractor/${c.id}`} className="listing-card" key={c.id}>
                 <div className="listing-header">
                   <div className="listing-logo">
-                    {c.logo ? <img src={c.logo} alt="" /> : <span className="listing-logo-icon">{categoryIcons[c.category] || '🏢'}</span>}
+                    <span className="listing-logo-icon">{categoryIcons[c.category] || '🏢'}</span>
                   </div>
                   <div className="listing-header-text">
                     <div className="listing-category">{c.category || 'Service'}</div>
