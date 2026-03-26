@@ -39,9 +39,26 @@ export default function Home() {
 
   async function loadContractors() {
     try {
+      // Try Supabase first
       const resp = await fetch('/api/contractors?limit=50');
       const result = await resp.json();
-      setContractors(result.data || []);
+      
+      if (result.data && result.data.length > 0) {
+        setContractors(result.data);
+      } else {
+        // Fall back to OpenStreetMap if database is empty
+        const osmResp = await fetch('/api/contractors/osm?category=hardware&limit=30');
+        const osmResult = await osmResp.json();
+        if (osmResult.data) {
+          // Assign fake IDs for Link navigation
+          setContractors(osmResult.data.map((c: any, i: number) => ({
+            ...c,
+            id: `osm-${i}`,
+            rating: null,
+            review_count: null,
+          })));
+        }
+      }
     } catch (e) {
       console.error('Failed to load contractors:', e);
     } finally {
@@ -50,12 +67,29 @@ export default function Home() {
   }
 
   async function handleSearch() {
+    // Try Supabase first
     let url = '/api/contractors?limit=100';
     if (searchCategory) url += `&category=${searchCategory}`;
+    
     try {
       const resp = await fetch(url);
       const result = await resp.json();
       let filtered = result.data || [];
+      
+      // If no results, try OSM
+      if (filtered.length === 0 && searchCategory) {
+        const osmResp = await fetch(`/api/contractors/osm?category=${searchCategory}&limit=30`);
+        const osmResult = await osmResp.json();
+        if (osmResult.data) {
+          filtered = osmResult.data.map((c: any, i: number) => ({
+            ...c,
+            id: `osm-${i}`,
+            rating: null,
+            review_count: null,
+          }));
+        }
+      }
+      
       if (searchCity) {
         filtered = filtered.filter((c: Contractor) => 
           c.city?.toLowerCase().includes(searchCity.toLowerCase())
