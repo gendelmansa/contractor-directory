@@ -41,3 +41,6 @@ data/
 
 # TypeScript
 *.tsbuildinfo
+
+# Git hooks (keep in repo)
+!.gitkeep

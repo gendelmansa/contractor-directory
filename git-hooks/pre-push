@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# QA Pre-Push Hook for Contractor Directory
+# Runs QA tests before allowing git push
+
+echo "Running QA tests before push..."
+
+cd "$(dirname "$0")/.."
+
+# Run QA tests
+npm run qa
+EXIT_CODE=$?
+
+if [ $EXIT_CODE -ne 0 ]; then
+    echo ""
+    echo "❌ QA tests failed. Push blocked."
+    echo "Fix the issues above or bypass with: git push --no-verify"
+    exit 1
+fi
+
+echo ""
+echo "✅ QA tests passed. Proceeding with push..."
+exit 0
