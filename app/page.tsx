@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, FormEvent } from 'react';
+import Link from 'next/link';
 
 interface Contractor {
   id: number;
@@ -13,6 +14,7 @@ interface Contractor {
   rating: number;
   review_count: number;
   phone: string;
+  logo: string;
 }
 
 export default function Home() {
@@ -167,9 +169,11 @@ export default function Home() {
         .category-count { font-size: 0.875rem; color: var(--gray-500); }
         .listings-section { max-width: 1400px; margin: 3rem auto; padding: 0 2rem; }
         .listings-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; }
-        .listing-card { background: white; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); transition: transform 0.2s; }
+        .listing-card { background: white; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); transition: transform 0.2s; display: block; text-decoration: none; color: inherit; }
         .listing-card:hover { transform: translateY(-4px); }
         .listing-header { background: linear-gradient(135deg, var(--accent), var(--accent-hover)); padding: 1.25rem; color: white; }
+        .contractor-logo { width: 50px; height: 50px; border-radius: 10px; object-fit: cover; background: white; margin-bottom: 0.75rem; }
+        .contractor-logo-placeholder { width: 50px; height: 50px; border-radius: 10px; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 0.75rem; }
         .listing-category { font-size: 0.75rem; text-transform: uppercase; }
         .listing-name { font-size: 1.25rem; font-weight: 700; margin-top: 0.25rem; }
         .listing-body { padding: 1.25rem; }
@@ -293,8 +297,15 @@ export default function Home() {
             <p style={{ textAlign: 'center' }}>No contractors found</p>
           ) : (
             contractors.slice(0, 12).map((c) => (
-              <div className="listing-card" key={c.id}>
+              <Link href={`/contractor/${c.id}`} className="listing-card" key={c.id}>
                 <div className="listing-header">
+                  {c.logo ? (
+                    <img src={c.logo} alt="" className="contractor-logo" />
+                  ) : (
+                    <div className="contractor-logo-placeholder">
+                      {c.category === 'plumber' ? '🔧' : c.category === 'electrician' ? '⚡' : c.category === 'hvac' ? '❄️' : c.category === 'roofer' ? '🏗️' : '🏢'}
+                    </div>
+                  )}
                   <div className="listing-category">{c.category || 'Service'}</div>
                   <div className="listing-name">{c.name}</div>
                 </div>
@@ -309,11 +320,11 @@ export default function Home() {
                   <div className="info-row">
                     <span>📞</span> {c.phone}
                   </div>
-                  <button className="btn-contact" onClick={() => setModalOpen(true)}>
+                  <button className="btn-contact" onClick={(e) => { e.preventDefault(); setModalOpen(true); }}>
                     Request Quote
                   </button>
                 </div>
-              </div>
+              </Link>
             ))
           )}
         </div>

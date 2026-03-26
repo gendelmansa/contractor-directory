@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
         
         let dbQuery = supabase
             .from('contractors')
-            .select('id, name, category, address, city, state, zip_code, rating, phone')
+            .select('id, name, category, address, city, state, zip_code, rating, review_count, phone, logo')
             .limit(Math.min(limit, 100));
         
         if (category) {

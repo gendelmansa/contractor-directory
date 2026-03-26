@@ -26,7 +26,7 @@ export async function GET(
 
         const { data, error } = await getSupabase()
             .from('contractors')
-            .select('id, name, category, address, city, state, zip_code, rating, review_count, website, source')
+            .select('id, name, category, address, city, state, zip_code, rating, review_count, website, logo')
             .eq('id', id)
             .single();
 
