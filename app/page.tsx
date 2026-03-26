@@ -66,10 +66,14 @@ export default function Home() {
     }
   }
 
-  async function handleSearch() {
+  async function handleSearch(overrideCategory?: string, overrideCity?: string) {
+    // Use provided values or fall back to state
+    const category = overrideCategory !== undefined ? overrideCategory : searchCategory;
+    const city = overrideCity !== undefined ? overrideCity : searchCity;
+    
     // Try Supabase first
     let url = '/api/contractors?limit=100';
-    if (searchCategory) url += `&category=${searchCategory}`;
+    if (category) url += `&category=${category}`;
     
     try {
       const resp = await fetch(url);
@@ -77,8 +81,8 @@ export default function Home() {
       let filtered = result.data || [];
       
       // If no results, try OSM
-      if (filtered.length === 0 && searchCategory) {
-        const osmResp = await fetch(`/api/contractors/osm?category=${searchCategory}&limit=30`);
+      if (filtered.length === 0 && category) {
+        const osmResp = await fetch(`/api/contractors/osm?category=${category}&limit=30`);
         const osmResult = await osmResp.json();
         if (osmResult.data) {
           filtered = osmResult.data.map((c: any, i: number) => ({
@@ -90,9 +94,9 @@ export default function Home() {
         }
       }
       
-      if (searchCity) {
+      if (city) {
         filtered = filtered.filter((c: Contractor) => 
-          c.city?.toLowerCase().includes(searchCity.toLowerCase())
+          c.city?.toLowerCase().includes(city.toLowerCase())
         );
       }
       setContractors(filtered);
@@ -101,8 +105,11 @@ export default function Home() {
 
   function filterCategory(cat: string) {
     setSearchCategory(cat);
-    handleSearch();
-    document.getElementById('listings')?.scrollIntoView({ behavior: 'smooth' });
+    // Wait for state to update, then search
+    setTimeout(() => {
+      handleSearch(cat, searchCity);
+      document.getElementById('listings')?.scrollIntoView({ behavior: 'smooth' });
+    }, 0);
   }
 
   async function submitLead(e: FormEvent<HTMLFormElement>) {
@@ -324,7 +331,7 @@ export default function Home() {
               <label>City</label>
               <input type="text" value={searchCity} onChange={(e) => setSearchCity(e.target.value)} placeholder="e.g. Detroit" />
             </div>
-            <button className="btn-search" onClick={handleSearch}>Search</button>
+            <button className="btn-search" onClick={() => handleSearch()}>Search</button>
           </div>
         </div>
       </div>
