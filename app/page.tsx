@@ -450,23 +450,20 @@ export default function Home() {
             }
             
             try {
-                const resp = await fetch('https://bvoaijksstjzseiywylf.supabase.co/rest/v1/leads', {
+                const resp = await fetch('/api/leads', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ2b2Fpamtzc3RqenNlaXl3eWxmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0Njc3NjksImV4cCI6MjA5MDA0Mzc2OX0.vtM9V0knv9rwbFE4PkRHAtCW5puIXVHHaU8K8ddoANk',
-                        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ2b2Fpamtzc3RqenNlaXl3eWxmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0Njc3NjksImV4cCI6MjA5MDA0Mzc2OX0.vtM9V0knv9rwbFE4PkRHAtCW5puIXVHHaU8K8ddoANk'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        name: name,
-                        phone: phone,
-                        email: email,
-                        category: category,
+                        name,
+                        phone,
+                        email,
+                        category,
                         zip_code: zip,
-                        description: desc,
-                        status: 'new'
+                        description: desc
                     })
                 });
+                
+                const result = await resp.json();
                 
                 if (resp.ok) {
                     document.getElementById('leadName').value = '';
