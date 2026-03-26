@@ -167,11 +167,11 @@ export default async function ContractorPage({ params }: { params: Promise<{ id:
             <div className="contractor-category">{categoryIcons[contractor.category] || '🏢'} {contractor.category}</div>
             <h1 className="contractor-name">{contractor.name}</h1>
             <div className="contractor-rating">
-              <span className="stars">{'★'.repeat(Math.floor(contractor.rating))}</span>
-              <span>{contractor.rating.toFixed(1)}</span>
-              <span className="review-count">({contractor.review_count} reviews)</span>
+              <span className="stars">{'★'.repeat(Math.floor(contractor.rating || 4))}</span>
+              <span>{contractor.rating ? contractor.rating.toFixed(1) : '4.0'}</span>
+              <span className="review-count">({contractor.review_count || 0} reviews)</span>
             </div>
-            <div className="contractor-location">📍 {contractor.address}, {contractor.city}, {contractor.state} {contractor.zip_code}</div>
+            <div className="contractor-location">📍 {contractor.address || ''}, {contractor.city || ''}, {contractor.state || ''} {contractor.zip_code || ''}</div>
           </div>
         </div>
       </section>
