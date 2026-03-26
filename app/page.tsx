@@ -387,7 +387,55 @@ export default function Home() {
         
         async function submitLead(e) {
             e.preventDefault();
-            alert('Thanks! Your quote request has been submitted. We\'ll connect you with contractors soon.');
+            
+            const name = document.getElementById('leadName').value;
+            const phone = document.getElementById('leadPhone').value;
+            const email = document.getElementById('leadEmail').value;
+            const category = document.getElementById('leadCategory').value;
+            const zip = document.getElementById('leadZip').value;
+            const desc = document.getElementById('leadDesc').value;
+            
+            if (!name || !phone || !category) {
+                alert('Please fill in required fields');
+                return;
+            }
+            
+            try {
+                const resp = await fetch('https://bvoaijksstjzseiywylf.supabase.co/rest/v1/leads', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ2b2Fpamtzc3RqenNlaXl3eWxmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0Njc3NjksImV4cCI6MjA5MDA0Mzc2OX0.vtM9V0knv9rwbFE4PkRHAtCW5puIXVHHaU8K8ddoANk',
+                        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ2b2Fpamtzc3RqenNlaXl3eWxmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0Njc3NjksImV4cCI6MjA5MDA0Mzc2OX0.vtM9V0knv9rwbFE4PkRHAtCW5puIXVHHaU8K8ddoANk'
+                    },
+                    body: JSON.stringify({
+                        name: name,
+                        phone: phone,
+                        email: email,
+                        category: category,
+                        zip_code: zip,
+                        description: desc,
+                        status: 'new'
+                    })
+                });
+                
+                if (resp.ok) {
+                    document.getElementById('leadName').value = '';
+                    document.getElementById('leadPhone').value = '';
+                    document.getElementById('leadEmail').value = '';
+                    document.getElementById('leadCategory').value = '';
+                    document.getElementById('leadZip').value = '';
+                    document.getElementById('leadDesc').value = '';
+                    
+                    alert('✅ Thanks! We\'ll connect you with contractors in your area soon.');
+                } else {
+                    alert('Something went wrong. Please try again.');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Error submitting. Please try again.');
+            }
+            
             closeLeadModal();
         }
         
