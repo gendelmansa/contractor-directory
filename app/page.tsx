@@ -7,6 +7,8 @@ export default function page(): any {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Michigan Contractors | Find Trusted Home Service Pros</title>
     <meta name="description" content="Find the best plumbers, electricians, HVAC, roofers and more in Michigan.">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5186873318610186"
+     crossorigin="anonymous"></script>
     <style>
         :root { --primary: #0f172a; --primary-light: #1e293b; --accent: #3b82f6; --accent-hover: #2563eb; --warning: #f59e0b; --gray-50: #f8fafc; --gray-100: #f1f5f9; --gray-200: #e2e8f0; --gray-500: #64748b; --gray-600: #475569; --gray-700: #334155; --gray-800: #1e293b; --gray-900: #0f172a; --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1); --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1); --radius: 12px; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -25,6 +27,8 @@ export default function page(): any {
         .stat-number { font-size: 2rem; font-weight: 700; }
         .stat-label { font-size: 0.875rem; opacity: 0.8; }
         .search-container { max-width: 900px; margin: -3rem auto 2rem; position: relative; z-index: 10; padding: 0 1rem; }
+        .ad-container { text-align: center; margin: 1.5rem auto; max-width: 100%; overflow: hidden; }
+        .ad-container.inset { max-width: 728px; }
         .search-box { background: white; border-radius: 16px; padding: 1.5rem; box-shadow: var(--shadow-lg); }
         .search-grid { display: grid; grid-template-columns: 1fr 1fr auto; gap: 1rem; }
         .form-group label { font-weight: 600; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--gray-700); }
@@ -68,6 +72,14 @@ export default function page(): any {
 <body>
     <nav><div class="nav-inner"><div class="logo"><div class="logo-icon">🏠</div>MichiganContractors</div><div class="nav-links"><a href="/">Home</a><a href="#categories">Categories</a><a href="#listings">Featured</a><a href="#" class="btn-nav" onclick="openLeadModal()">Get Quote</a></div></div></nav>
     <section class="hero"><h1>Find Trusted Contractors<br>Across Michigan</h1><p>Connect with verified plumbers, electricians, HVAC pros, and more</p><div class="hero-stats"><div class="stat"><div class="stat-number">130+</div><div class="stat-label">Verified Contractors</div></div><div class="stat"><div class="stat-number">30+</div><div class="stat-label">Cities</div></div><div class="stat"><div class="stat-number">8</div><div class="stat-label">Services</div></div></div></section>
+    <div class="ad-container">
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-5186873318610186"
+             data-ad-slot="1234567890"
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
+    </div>
     <div class="search-container"><div class="search-box"><div class="search-grid"><div class="form-group"><label>Service Type</label><select id="categoryInput"><option value="">All Services</option><option value="plumber">Plumbers</option><option value="electrician">Electricians</option><option value="hvac">HVAC</option><option value="roofer">Roofers</option><option value="landscaper">Landscapers</option><option value="painter">Painters</option><option value="carpenter">Carpenters</option><option value="cleaner">Cleaners</option></select></div><div class="form-group"><label>City</label><input type="text" id="cityInput" placeholder="e.g. Detroit"></div><button class="btn-search" onclick="searchContractors()">Search</button></div></div></div>
     <section class="categories-section" id="categories"><h2 class="section-title">Browse by Service</h2><div class="categories-grid"><div class="category-card" onclick="filterCategory('plumber')"><div class="category-icon">🔧</div><div class="category-name">Plumbing</div><div class="category-count">30+ pros</div></div><div class="category-card" onclick="filterCategory('electrician')"><div class="category-icon">⚡</div><div class="category-name">Electrical</div><div class="category-count">25+ pros</div></div><div class="category-card" onclick="filterCategory('hvac')"><div class="category-icon">❄️</div><div class="category-name">HVAC</div><div class="category-count">20+ pros</div></div><div class="category-card" onclick="filterCategory('roofer')"><div class="category-icon">🏗️</div><div class="category-name">Roofing</div><div class="category-count">15+ pros</div></div></div></section>
     <section class="listings-section" id="listings"><h2 class="section-title">Featured Contractors</h2><div class="listings-grid" id="listingsGrid"><p style="text-align:center;padding:2rem;">Loading contractors...</p></div></section>
@@ -106,6 +118,7 @@ export default function page(): any {
             closeLeadModal();
         }
         loadContractors();
+        try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) { console.log('AdSense init error:', e); }
     </script>
 </body>
 </html>`;
