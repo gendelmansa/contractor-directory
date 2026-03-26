@@ -1,14 +1,14 @@
 import type { Metadata } from 'next';
-import Schema from './components/Schema';
 
 export const metadata: Metadata = {
-  title: 'Find Trusted Contractors Near You | Plumbers, Electricians & More',
-  description: 'Search our directory of verified contractors. Find plumbers, electricians, HVAC pros, roofers & more. Free quotes & reviews.',
-  keywords: 'contractors, plumbers, electricians, HVAC, roofer, near me, home services',
+  title: 'Michigan Contractors | Find Trusted Home Service Pros',
+  description: 'Find the best plumbers, electricians, HVAC, roofers and more in Michigan.',
+  keywords: 'contractors, plumbers, electricians, HVAC, roofer, Michigan, home services',
   openGraph: {
-    title: 'Find Trusted Contractors Near You',
-    description: 'Search our directory of verified contractors. Find plumbers, electricians, HVAC pros, roofers & more.',
+    title: 'Michigan Contractors | Find Trusted Home Service Pros',
+    description: 'Find the best plumbers, electricians, HVAC, roofers and more in Michigan.',
     type: 'website',
+    url: 'https://michigan-contractors.com',
   },
 };
 
@@ -19,10 +19,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>
-        <Schema />
-        {children}
-      </body>
+      <head>
+        <link rel="preconnect" href="https://pagead2.googlesyndication.com" />
+      </head>
+      <body>{children}</body>
     </html>
   );
 }
