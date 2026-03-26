@@ -63,6 +63,8 @@ export default function Home() {
         .form-group select:focus, .form-group input:focus { outline: none; border-color: var(--accent); }
         .btn-search { background: var(--accent); color: white; padding: 0.875rem 2rem; border: none; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
         .btn-search:hover { background: var(--accent-hover); }
+        .btn-location { background: white; color: var(--gray-700); padding: 0.875rem 1rem; border: 2px solid var(--gray-200); border-radius: 10px; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.2s; width: 100%; }
+        .btn-location:hover { border-color: var(--accent); color: var(--accent); }
         
         /* Categories */
         .categories-section { max-width: 1400px; margin: 3rem auto; padding: 0 2rem; }
@@ -167,30 +169,32 @@ export default function Home() {
     <div class="search-container">
         <div class="search-box">
             <div class="search-grid">
-                <div class="form-group">
-                    <label>Service Type</label>
-                    <select id="categoryInput">
-                        <option value="">All Services</option>
-                        <option value="plumber">Plumbers</option>
-                        <option value="electrician">Electricians</option>
-                        <option value="hvac">HVAC</option>
-                        <option value="roofer">Roofers</option>
-                        <option value="landscaper">Landscapers</option>
-                        <option value="painter">Painters</option>
-                        <option value="carpenter">Carpenters</option>
-                        <option value="cleaner">Cleaners</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>City</label>
-                    <input type="text" id="cityInput" placeholder="e.g. Detroit, Ann Arbor">
-                </div>
-                <div class="form-group">
-                    <label>Search</label>
-                    <input type="text" id="queryInput" placeholder="Company name...">
-                </div>
-                <button class="btn-search" onclick="searchContractors()">Search</button>
+            <div class="form-group">
+                <label>Service Type</label>
+                <select id="categoryInput">
+                    <option value="">All Services</option>
+                    <option value="plumber">Plumbers</option>
+                    <option value="electrician">Electricians</option>
+                    <option value="hvac">HVAC</option>
+                    <option value="roofer">Roofers</option>
+                    <option value="landscaper">Landscapers</option>
+                    <option value="painter">Painters</option>
+                    <option value="carpenter">Carpenters</option>
+                    <option value="cleaner">Cleaners</option>
+                </select>
             </div>
+            <div class="form-group">
+                <label>City</label>
+                <input type="text" id="cityInput" placeholder="e.g. Detroit, Ann Arbor">
+            </div>
+            <div class="form-group">
+                <label>Or Use My Location</label>
+                <button type="button" class="btn-location" onclick="getUserLocation()">
+                    📍 Use My Location
+                </button>
+            </div>
+            <button class="btn-search" onclick="searchContractors()">Search</button>
+        </div>
         </div>
     </div>
 
@@ -295,6 +299,44 @@ export default function Home() {
 
     <script>
         let allContractors = [];
+        let userLat = null;
+        let userLng = null;
+        
+        function getUserLocation() {
+            if (!navigator.geolocation) {
+                alert('Geolocation is not supported by your browser');
+                return;
+            }
+            
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    userLat = position.coords.latitude;
+                    userLng = position.coords.longitude;
+                    alert('Location found! ' + userLat.toFixed(4) + ', ' + userLng.toFixed(4) + '. Search will find contractors near you.');
+                    searchContractors();
+                },
+                (error) => {
+                    let msg = 'Unable to get location: ';
+                    if (error.code === 1) msg += 'Permission denied. Please allow location access.';
+                    else if (error.code === 2) msg += 'Position unavailable.';
+                    else if (error.code === 3) msg += 'Timeout. Please try again.';
+                    alert(msg);
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        }
+        
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            // Simple distance in miles
+            const R = 3959;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
         
         async function loadContractors() {
             const grid = document.getElementById('listingsGrid');
@@ -348,9 +390,8 @@ export default function Home() {
         async function searchContractors() {
             const category = document.getElementById('categoryInput').value;
             const city = document.getElementById('cityInput').value;
-            const query = document.getElementById('queryInput').value;
             
-            let url = '/api/contractors?limit=50';
+            let url = '/api/contractors?limit=100';
             if (category) url += '&category=' + category;
             
             try {
@@ -358,14 +399,22 @@ export default function Home() {
                 const result = await resp.json();
                 let filtered = result.data || [];
                 
+                // Filter by city if entered
                 if (city) {
                     filtered = filtered.filter(c => c.city && c.city.toLowerCase().includes(city.toLowerCase()));
                 }
-                if (query) {
-                    filtered = filtered.filter(c => c.name && c.name.toLowerCase().includes(query.toLowerCase()));
+                
+                // Filter by location if user provided location
+                if (userLat && userLng) {
+                    filtered = filtered.filter(c => {
+                        if (!c.latitude || !c.longitude) return false;
+                        const dist = calculateDistance(userLat, userLng, c.latitude, c.longitude);
+                        c.distance = dist;
+                        return dist <= 25; // 25 mile radius
+                    }).sort((a, b) => a.distance - b.distance);
                 }
                 
-                displayContractors(filterors);
+                displayContractors(filtered);
             } catch (e) {
                 console.error(e);
             }
