@@ -1,6 +1,8 @@
-import { notFound } from 'next/navigation';
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Metadata } from 'next';
+import { useParams } from 'next/navigation';
 
 interface Contractor {
   id: string;
@@ -16,71 +18,63 @@ interface Contractor {
   website: string | null;
 }
 
-interface Review {
-  id: number;
-  contractor_id: number;
-  author_name: string;
-  rating: number;
-  content: string;
-  created_at: string;
-}
-
-async function getContractor(id: string): Promise<Contractor | null> {
-  try {
-    const { createClient } = await import('@supabase/supabase-js');
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-    const { data, error } = await supabase.from('contractors').select('*').eq('id', id).single();
-    if (error) {
-      console.error('Error fetching contractor:', error);
-      return null;
-    }
-    return data;
-  } catch (e) {
-    console.error('Error loading contractor:', e);
-    return null;
-  }
-}
-
-async function getReviews(id: string): Promise<Review[]> {
-  try {
-    const { createClient } = await import('@supabase/supabase-js');
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-    const { data } = await supabase.from('reviews').select('*').eq('contractor_id', id).order('created_at', { ascending: false }).limit(10);
-    return data || [];
-  } catch (e) {
-    console.error('Error loading reviews:', e);
-    return [];
-  }
-}
-
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
-  const { id } = await params;
-  const contractor = await getContractor(id);
-  if (!contractor) return { title: 'Contractor Not Found' };
-  return {
-    title: `${contractor.name} | Michigan Contractors`,
-    description: `${contractor.name} - ${contractor.category} in ${contractor.city}, Michigan. Rating: ${contractor.rating}/5`,
-  };
-}
-
-export default async function ContractorPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const contractor = await getContractor(id);
-  if (!contractor) notFound();
-  const reviews = await getReviews(id);
+export default function ContractorPage() {
+  const params = useParams();
+  const id = params?.id as string;
   
-  const categoryIcons: Record<string, string> = { plumber: '🔧', electrician: '⚡', hvac: '❄️', roofer: '🏗️', landscaper: '🌳', painter: '🎨', carpenter: '🪚', cleaner: '🧹' };
+  const [contractor, setContractor] = useState<Contractor | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!id) return;
+    
+    async function fetchContractor() {
+      try {
+        const resp = await fetch(`/api/contractors/${id}`);
+        const data = await resp.json();
+        
+        if (data.error || !data.data) {
+          setError('Contractor not found');
+        } else {
+          setContractor(data.data);
+        }
+      } catch (e) {
+        setError('Failed to load contractor');
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    fetchContractor();
+  }, [id]);
+
+  const categoryIcons: Record<string, string> = { 
+    plumber: '🔧', electrician: '⚡', hvac: '❄️', roofer: '🏗️', 
+    landscaper: '🌳', painter: '🎨', carpenter: '🪚', cleaner: '🧹' 
+  };
+
+  if (loading) {
+    return (
+      <div style={{ padding: '2rem', textAlign: 'center' }}>
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  if (error || !contractor) {
+    return (
+      <div style={{ padding: '2rem', textAlign: 'center' }}>
+        <h2>Contractor not found</h2>
+        <Link href="/" style={{ color: '#00A896' }}>← Back to Directory</Link>
+      </div>
+    );
+  }
 
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: `
-        :root { --primary: #0D5C63; --primary-dark: #094147; --accent: #00A896; --accent-light: #02C4AC; --warning: #F5A623; --white: #ffffff; --gray-50: #F9FAFB; --gray-100: #F3F4F6; --gray-200: #E5E7EB; --gray-300: #D1D5DB; --gray-400: #9CA3AF; --gray-500: #6B7280; --gray-600: #4B5563; --gray-700: #374151; --gray-800: #1F2937; --gray-900: #111827; --shadow: 0 1px 3px rgba(0,0,0,0.1); --shadow-md: 0 4px 6px rgba(0,0,0,0.1); --shadow-lg: 0 10px 15px rgba(0,0,0,0.1); --radius: 8px; --radius-lg: 12px; --radius-xl: 16px; }
+        :root { --primary: #0D5C63; --primary-dark: #094147; --accent: #00A896; --accent-light: #02C4AC; --warning: #F5A623; --white: #ffffff; --gray-50: #F9FAFB; --gray-100: #F3F4F6; --gray-200: #E5E7EB; --gray-400: #9CA3AF; --gray-500: #6B7280; --gray-600: #4B5563; --gray-700: #374151; --gray-800: #1F2937; --gray-900: #111827; --shadow: 0 1px 3px rgba(0,0,0,0.1); --shadow-md: 0 4px 6px rgba(0,0,0,0.1); --shadow-lg: 0 10px 15px rgba(0,0,0,0.1); --radius: 8px; --radius-lg: 12px; --radius-xl: 16px; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--gray-50); color: var(--gray-800); line-height: 1.6; -webkit-font-smoothing: antialiased; }
         
@@ -96,7 +90,6 @@ export default async function ContractorPage({ params }: { params: Promise<{ id:
         .hero { background: linear-gradient(135deg, var(--primary-dark), var(--primary)); padding: 3rem 2rem; color: var(--white); }
         .hero-content { max-width: 1280px; margin: 0 auto; display: flex; gap: 2.5rem; align-items: center; }
         .logo-container { width: 130px; height: 130px; background: var(--white); border-radius: var(--radius-xl); display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: var(--shadow-lg); flex-shrink: 0; }
-        .logo-container img { width: 100%; height: 100%; object-fit: cover; }
         .logo-placeholder { font-size: 3.5rem; }
         .contractor-info { flex: 1; }
         .contractor-category { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.2); padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.875rem; margin-bottom: 0.75rem; font-weight: 500; }
@@ -117,15 +110,6 @@ export default async function ContractorPage({ params }: { params: Promise<{ id:
         .content { max-width: 1280px; margin: 0 auto; padding: 2.5rem 2rem; display: grid; grid-template-columns: 1fr 380px; gap: 2rem; }
         .section { background: var(--white); border-radius: var(--radius-xl); padding: 1.75rem; box-shadow: var(--shadow); border: 1px solid var(--gray-200); }
         .section-title { font-size: 1.35rem; font-weight: 700; margin-bottom: 1.25rem; color: var(--gray-800); display: flex; align-items: center; gap: 0.5rem; }
-        
-        .review-card { padding: 1.25rem; border: 1px solid var(--gray-200); border-radius: var(--radius-lg); margin-bottom: 1rem; transition: all 0.2s; }
-        .review-card:hover { border-color: var(--accent-light); box-shadow: var(--shadow-sm); }
-        .review-card:last-child { margin-bottom: 0; }
-        .review-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
-        .review-author { font-weight: 600; color: var(--gray-800); }
-        .review-date { font-size: 0.85rem; color: var(--gray-500); }
-        .review-rating { color: var(--warning); font-size: 0.95rem; letter-spacing: 1px; margin-bottom: 0.5rem; }
-        .review-content { color: var(--gray-600); font-size: 0.95rem; line-height: 1.6; }
         .no-reviews { color: var(--gray-500); text-align: center; padding: 2rem; font-size: 1rem; }
         
         .sidebar { display: flex; flex-direction: column; gap: 1.25rem; }
@@ -178,9 +162,10 @@ export default async function ContractorPage({ params }: { params: Promise<{ id:
 
       <div className="action-bar">
         <div className="action-bar-inner">
-          <a href={`tel:${contractor.phone}`} className="btn btn-primary">📞 Call Now</a>
-          {contractor.website && contractor.website.length > 0 && <a href={contractor.website} target="_blank" rel="noopener noreferrer" className="btn btn-secondary">🌐 Website</a>}
-          <button className="btn btn-primary" onClick={() => window.location.href = '/#listings'}>📝 Write Review</button>
+          <a href={`tel:${contractor.phone || ''}`} className="btn btn-primary">📞 Call Now</a>
+          {contractor.website && contractor.website.length > 0 && (
+            <a href={contractor.website} target="_blank" rel="noopener noreferrer" className="btn btn-secondary">🌐 Website</a>
+          )}
         </div>
       </div>
 
@@ -188,20 +173,7 @@ export default async function ContractorPage({ params }: { params: Promise<{ id:
         <div className="main-content">
           <div className="section">
             <h2 className="section-title">💬 Customer Reviews</h2>
-            {reviews.length === 0 ? (
-              <p className="no-reviews">No reviews yet. Be the first to share your experience!</p>
-            ) : (
-              reviews.map((review) => (
-                <div className="review-card" key={review.id}>
-                  <div className="review-header">
-                    <span className="review-author">{review.author_name}</span>
-                    <span className="review-date">{new Date(review.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
-                  </div>
-                  <div className="review-rating">{'★'.repeat(review.rating)}</div>
-                  <p className="review-content">{review.content}</p>
-                </div>
-              ))
-            )}
+            <p className="no-reviews">No reviews yet. Be the first to share your experience!</p>
           </div>
         </div>
 
@@ -210,15 +182,24 @@ export default async function ContractorPage({ params }: { params: Promise<{ id:
             <h3 className="contact-title">📋 Contact Information</h3>
             <div className="contact-row">
               <div className="contact-icon">📞</div>
-              <div className="contact-info"><div className="contact-label">Phone</div><a href={`tel:${contractor.phone}`} className="contact-value">{contractor.phone}</a></div>
+              <div className="contact-info">
+                <div className="contact-label">Phone</div>
+                <a href={`tel:${contractor.phone}`} className="contact-value">{contractor.phone}</a>
+              </div>
             </div>
             <div className="contact-row">
               <div className="contact-icon">📍</div>
-              <div className="contact-info"><div className="contact-label">Address</div><div className="contact-value">{contractor.address}</div></div>
+              <div className="contact-info">
+                <div className="contact-label">Address</div>
+                <div className="contact-value">{contractor.address}</div>
+              </div>
             </div>
             <div className="contact-row">
               <div className="contact-icon">🏙️</div>
-              <div className="contact-info"><div className="contact-label">City</div><div className="contact-value">{contractor.city}, {contractor.state} {contractor.zip_code}</div></div>
+              <div className="contact-info">
+                <div className="contact-label">City</div>
+                <div className="contact-value">{contractor.city}, {contractor.state} {contractor.zip_code}</div>
+              </div>
             </div>
           </div>
 
