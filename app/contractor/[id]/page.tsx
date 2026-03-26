@@ -205,7 +205,17 @@ export default function ContractorPage() {
 
           <div className="map-card">
             <h3 className="contact-title">🗺️ Location</h3>
-            <div className="map-placeholder">📍 {contractor.city}, Michigan</div>
+            <a 
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(contractor.address + ', ' + contractor.city + ', ' + contractor.state + ' ' + contractor.zip_code)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ display: 'block', textDecoration: 'none' }}
+            >
+              <div className="map-placeholder" style={{ cursor: 'pointer', background: 'linear-gradient(135deg, #E8F5E9, #C8E6C9)', color: '#2E7D32', fontWeight: '600' }}>
+                📍 View on Google Maps<br/>
+                <span style={{ fontSize: '0.85rem', fontWeight: '400', opacity: 0.8 }}>{contractor.address}, {contractor.city}</span>
+              </div>
+            </a>
           </div>
         </div>
       </div>
