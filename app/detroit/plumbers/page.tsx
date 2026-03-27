@@ -1,5 +1,7 @@
 import { getContractorsByCity } from '@/lib/contractors';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'Plumbers in Detroit, MI | Trusted & Verified',
   description: 'Find the best plumbers in Detroit, Michigan. Verified reviews, contact info, and free quotes from top-rated plumbing companies.',
