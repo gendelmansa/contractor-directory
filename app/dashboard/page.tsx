@@ -45,7 +45,7 @@ export default function DashboardPage() {
       const supabase = getSupabaseClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        window.location.href = '/login';
+        window.location.href = '/auth';
         return;
       }
       setUser(user);
@@ -58,7 +58,7 @@ export default function DashboardPage() {
         .single();
       
       if (!operator) {
-        window.location.href = '/login';
+        window.location.href = '/auth';
         return;
       }
 
@@ -143,7 +143,7 @@ export default function DashboardPage() {
   const signOut = async () => {
     const supabase = getSupabaseClient();
     await supabase.auth.signOut();
-    window.location.href = '/login';
+    window.location.href = '/auth';
   };
 
   if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>;
