@@ -19,6 +19,8 @@ interface Contractor {
   skills: string[];
   bio: string;
   is_active: boolean;
+  email?: string;
+  name?: string;
 }
 
 interface Assignment {
@@ -38,14 +40,16 @@ export default function DashboardPage() {
   const [contractors, setContractors] = useState<Contractor[]>([]);
   const [user, setUser] = useState<any>(null);
   const [showNewJob, setShowNewJob] = useState(false);
+  const [showAddContractor, setShowAddContractor] = useState(false);
   const [newJob, setNewJob] = useState({ title: '', description: '', address: '', scheduled_date: '', scheduled_time: '', priority: 'normal' });
+  const [newContractor, setNewContractor] = useState({ email: '', name: '', skills: '' });
 
   useEffect(() => {
     const checkUser = async () => {
       const supabase = getSupabaseClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        window.location.href = '/auth';
+        window.location.href = '/login';
         return;
       }
       setUser(user);
@@ -58,7 +62,7 @@ export default function DashboardPage() {
         .single();
       
       if (!operator) {
-        window.location.href = '/auth';
+        window.location.href = '/login';
         return;
       }
 
@@ -134,6 +138,35 @@ export default function DashboardPage() {
     loadDashboard(supabase, user.id);
   };
 
+  const addContractor = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const supabase = getSupabaseClient();
+
+    const { data: operator } = await supabase
+      .from('operators')
+      .select('id')
+      .eq('user_id', user.id)
+      .single();
+
+    if (!operator) return;
+
+    // Create contractor profile directly (they can sign in with the same email later)
+    const { error } = await supabase.from('contractor_profiles').insert({
+      operator_id: operator.id,
+      name: newContractor.name,
+      skills: newContractor.skills ? newContractor.skills.split(',').map(s => s.trim()) : [],
+      is_active: true,
+      // Note: For actual auth, the contractor would need to sign up themselves
+      // This creates a placeholder record that can be linked later
+    });
+
+    if (!error) {
+      setShowAddContractor(false);
+      setNewContractor({ email: '', name: '', skills: '' });
+      loadDashboard(supabase, operator.id);
+    }
+  };
+
   const updateProgress = async (assignmentId: string, progress: number) => {
     const supabase = getSupabaseClient();
     await supabase.from('job_assignments').update({ progress_percent: progress }).eq('id', assignmentId);
@@ -143,7 +176,7 @@ export default function DashboardPage() {
   const signOut = async () => {
     const supabase = getSupabaseClient();
     await supabase.auth.signOut();
-    window.location.href = '/auth';
+    window.location.href = '/login';
   };
 
   if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>;
@@ -177,7 +210,10 @@ export default function DashboardPage() {
         </div>
 
         {/* New Job Button */}
-        <button onClick={() => setShowNewJob(true)} style={{ background: '#2563eb', color: 'white', padding: '0.75rem 1.5rem', border: 'none', borderRadius: '4px', cursor: 'pointer', marginBottom: '2rem' }}>+ New Job</button>
+        <button onClick={() => setShowNewJob(true)} style={{ background: '#2563eb', color: 'white', padding: '0.75rem 1.5rem', border: 'none', borderRadius: '4px', cursor: 'pointer', marginBottom: '2rem', marginRight: '1rem' }}>+ New Job</button>
+
+        {/* Add Contractor Button */}
+        <button onClick={() => setShowAddContractor(true)} style={{ background: '#10b981', color: 'white', padding: '0.75rem 1.5rem', border: 'none', borderRadius: '4px', cursor: 'pointer', marginBottom: '2rem' }}>+ Add Contractor</button>
 
         {/* New Job Form Modal */}
         {showNewJob && (
@@ -201,6 +237,43 @@ export default function DashboardPage() {
                 <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
                   <button type="submit" style={{ flex: 1, padding: '0.5rem', background: '#2563eb', color: 'white', border: 'none', borderRadius: '4px' }}>Create</button>
                   <button type="button" onClick={() => setShowNewJob(false)} style={{ flex: 1, padding: '0.5rem', background: '#ccc', border: 'none', borderRadius: '4px' }}>Cancel</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Add Contractor Modal */}
+        {showAddContractor && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ background: 'white', padding: '2rem', borderRadius: '8px', width: '100%', maxWidth: '400px' }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem' }}>Add Contractor</h2>
+              <form onSubmit={addContractor}>
+                <input 
+                  placeholder="Contractor Name" 
+                  value={newContractor.name} 
+                  onChange={e => setNewContractor({...newContractor, name: e.target.value})} 
+                  required 
+                  style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem', border: '1px solid #ccc', borderRadius: '4px' }} 
+                />
+                <input 
+                  placeholder="Email (optional)" 
+                  value={newContractor.email} 
+                  onChange={e => setNewContractor({...newContractor, email: e.target.value})} 
+                  style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem', border: '1px solid #ccc', borderRadius: '4px' }} 
+                />
+                <input 
+                  placeholder="Skills (comma separated, e.g. plumbing, electrical)" 
+                  value={newContractor.skills} 
+                  onChange={e => setNewContractor({...newContractor, skills: e.target.value})} 
+                  style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem', border: '1px solid #ccc', borderRadius: '4px' }} 
+                />
+                <p style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '1rem' }}>
+                  Note: The contractor will need to sign up themselves to access the portal. You can assign them jobs now.
+                </p>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button type="submit" style={{ flex: 1, padding: '0.5rem', background: '#10b981', color: 'white', border: 'none', borderRadius: '4px' }}>Add</button>
+                  <button type="button" onClick={() => setShowAddContractor(false)} style={{ flex: 1, padding: '0.5rem', background: '#ccc', border: 'none', borderRadius: '4px' }}>Cancel</button>
                 </div>
               </form>
             </div>
@@ -232,11 +305,11 @@ export default function DashboardPage() {
                     </td>
                     <td style={{ padding: '0.75rem' }}>
                       {a.contractor ? (
-                        <span style={{ padding: '0.25rem 0.5rem', background: '#dbeafe', borderRadius: '4px', fontSize: '0.75rem' }}>Contractor</span>
+                        <span style={{ padding: '0.25rem 0.5rem', background: '#dbeafe', borderRadius: '4px', fontSize: '0.75rem' }}>{a.contractor.name || a.contractor.email || a.contractor.user_id?.slice(0, 8) || 'Contractor'}</span>
                       ) : (
                         <select onChange={(e) => e.target.value && assignJob(a.job_id, e.target.value)} style={{ padding: '0.25rem', fontSize: '0.75rem' }}>
                           <option value="">Assign...</option>
-                          {contractors.map(c => <option key={c.id} value={c.id}>{c.user_id.slice(0, 8)}...</option>)}
+                          {contractors.map(c => <option key={c.id} value={c.id}>{c.name || c.email || c.user_id?.slice(0, 8)}</option>)}
                         </select>
                       )}
                     </td>

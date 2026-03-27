@@ -32,23 +32,15 @@ export default function LoginPage() {
 
         if (authError) throw authError;
 
-        // Create profile record
-        if (role === 'operator') {
-          const { error: profileError } = await supabase.from('operators').insert({
-            user_id: authData.user?.id,
-            company_name: companyName,
-            contact_name: contactName,
-            email
-          });
-          if (profileError) throw profileError;
-        } else {
-          // For contractors, we'll need operator to add them - just create placeholder
-          const { error: profileError } = await supabase.from('contractor_profiles').insert({
-            user_id: authData.user?.id,
-            skills: [],
-            is_active: true
-          });
-          if (profileError) throw profileError;
+        // The auth trigger will automatically create the profile
+        // Just redirect to appropriate dashboard
+        if (authData.user) {
+          if (role === 'operator') {
+            window.location.href = '/dashboard';
+          } else {
+            window.location.href = '/portal';
+          }
+          return;
         }
 
         alert('Account created! Please sign in.');

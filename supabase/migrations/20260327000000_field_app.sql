@@ -21,6 +21,8 @@ CREATE TABLE IF NOT EXISTS contractor_profiles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
     operator_id UUID REFERENCES operators(id) ON DELETE CASCADE,
+    name TEXT,
+    email TEXT,
     skills TEXT[],
     bio TEXT,
     is_active BOOLEAN DEFAULT true,

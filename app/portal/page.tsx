@@ -42,13 +42,14 @@ export default function PortalPage() {
   const [selectedJob, setSelectedJob] = useState<Assignment | null>(null);
   const [newNote, setNewNote] = useState('');
   const [showNoteForm, setShowNoteForm] = useState(false);
+  const [showNoProfile, setShowNoProfile] = useState(false);
 
   useEffect(() => {
     const checkUser = async () => {
       const supabase = getSupabaseClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        window.location.href = '/auth';
+        window.location.href = '/login';
         return;
       }
       setUser(user);
@@ -67,8 +68,9 @@ export default function PortalPage() {
         .single();
 
       if (!contractor) {
-        // No profile yet - show empty state
+        // No profile yet - show empty state with option to create
         setLoading(false);
+        setShowNoProfile(true);
         return;
       }
 
@@ -169,10 +171,32 @@ export default function PortalPage() {
   const signOut = async () => {
     const supabase = getSupabaseClient();
     await supabase.auth.signOut();
-    window.location.href = '/auth';
+    window.location.href = '/login';
   };
 
   if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>;
+
+  if (showNoProfile) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#f5f5f5' }}>
+        <header style={{ background: 'white', padding: '1rem 2rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>🔧 Contractor Portal</h1>
+          <button onClick={signOut} style={{ padding: '0.5rem 1rem', background: '#dc2626', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Sign Out</button>
+        </header>
+        <main style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
+          <div style={{ background: 'white', padding: '3rem', borderRadius: '8px', marginTop: '2rem' }}>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem' }}>No Profile Found</h2>
+            <p style={{ color: '#6b7280', marginBottom: '1rem' }}>
+              You don't have a contractor profile yet. Please contact your operator to be added to their team.
+            </p>
+            <button onClick={signOut} style={{ padding: '0.75rem 1.5rem', background: '#2563eb', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+              Sign Out
+            </button>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   const activeJobs = assignments.filter(a => a.status !== 'completed');
   const completedJobs = assignments.filter(a => a.status === 'completed');
