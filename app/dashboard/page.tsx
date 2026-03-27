@@ -93,7 +93,7 @@ export default function DashboardPage() {
           job:jobs(*),
           contractor:contractor_profiles(*)
         `)
-        .in('job_id', (jobsData || []).map(j => j.id));
+        .in('job_id', (jobsData || []).map((j: Job) => j.id));
 
       setAssignments(assignmentData || []);
     } catch (error) {
@@ -141,7 +141,7 @@ export default function DashboardPage() {
   };
 
   const signOut = async () => {
-    const supabase = getSupabase();
+    const supabase = getSupabaseClient();
     await supabase.auth.signOut();
     window.location.href = '/login';
   };
