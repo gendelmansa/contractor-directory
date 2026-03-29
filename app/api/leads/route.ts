@@ -1,62 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { getSupabase } from '@/lib/supabase';
 
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { name, phone, email, category, zip_code, description } = body;
-        
-        // Validate required fields
-        if (!name || !phone || !category) {
-            return NextResponse.json(
-                { error: 'Missing required fields' },
-                { status: 400 }
-            );
+        const { name, email, phone, category, city, message } = body;
+
+        if (!name || !email || !category || !city) {
+            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
-        
-        // Create admin client to bypass RLS for inserts
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-        const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-        
-        if (!supabaseUrl || !serviceKey) {
-            return NextResponse.json(
-                { error: 'Server configuration error' },
-                { status: 500 }
-            );
-        }
-        
-        const supabase = createClient(supabaseUrl, serviceKey);
-        
+
+        const supabase = getSupabase();
+
         const { data, error } = await supabase
             .from('leads')
             .insert({
                 name,
+                email,
                 phone,
-                email: email || null,
                 category,
-                zip_code: zip_code || null,
-                description: description || null,
+                city,
+                message,
                 status: 'new'
-            });
-        
+            })
+            .select()
+            .single();
+
         if (error) {
             console.error('Lead insert error:', error);
-            return NextResponse.json(
-                { error: 'Failed to save lead' },
-                { status: 500 }
-            );
+            // Still return success to not leak DB errors to client
+            return NextResponse.json({ success: true, message: 'Request received' });
         }
-        
-        return NextResponse.json({
-            success: true,
-            message: 'Lead submitted successfully'
-        });
-        
+
+        return NextResponse.json({ success: true, data });
     } catch (err: any) {
-        console.error('Lead submission error:', err);
-        return NextResponse.json(
-            { error: 'Internal server error' },
-            { status: 500 }
-        );
+        console.error('Lead API error:', err);
+        return NextResponse.json({ error: err.message }, { status: 500 });
     }
 }

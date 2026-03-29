@@ -37,7 +37,7 @@ export async function getUser() {
   return user;
 }
 
-export type UserRole = 'operator' | 'contractor';
+export type UserRole = 'admin' | 'operator' | 'contractor';
 
 export function getUserRole(user: any): UserRole {
   return user?.user_metadata?.role || 'contractor';

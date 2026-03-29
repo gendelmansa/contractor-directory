@@ -43,6 +43,8 @@ export default function PortalPage() {
   const [newNote, setNewNote] = useState('');
   const [showNoteForm, setShowNoteForm] = useState(false);
   const [showNoProfile, setShowNoProfile] = useState(false);
+  const [activeTab, setActiveTab] = useState<'active' | 'completed'>('active');
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -114,6 +116,9 @@ export default function PortalPage() {
       status: progress === 100 ? 'completed' : progress > 0 ? 'in_progress' : 'assigned'
     }).eq('id', assignmentId);
     loadPortal(supabase, user.id);
+    const assignment = assignments.find(a => a.id === assignmentId);
+    setToast({ message: progress === 100 ? 'Job completed!' : `Progress updated to ${progress}%`, type: 'success' });
+    setTimeout(() => setToast(null), 3000);
   };
 
   const startJob = async (assignmentId: string) => {
@@ -130,6 +135,8 @@ export default function PortalPage() {
     }
     
     loadPortal(supabase, user.id);
+    setToast({ message: 'Job started!', type: 'success' });
+    setTimeout(() => setToast(null), 3000);
   };
 
   const completeJob = async (assignmentId: string) => {
@@ -150,6 +157,8 @@ export default function PortalPage() {
     }
     
     loadPortal(supabase, user.id);
+    setToast({ message: 'Job marked as complete!', type: 'success' });
+    setTimeout(() => setToast(null), 3000);
   };
 
   const addNote = async (e: React.FormEvent) => {
@@ -198,8 +207,11 @@ export default function PortalPage() {
     );
   }
 
-  const activeJobs = assignments.filter(a => a.status !== 'completed');
-  const completedJobs = assignments.filter(a => a.status === 'completed');
+  const activeJobs = assignments.filter(a => a.job?.status !== 'completed');
+  const completedJobs = assignments.filter(a => a.job?.status === 'completed');
+
+  // Filter based on tab
+  const displayedJobs = activeTab === 'active' ? activeJobs : completedJobs;
 
   return (
     <div style={{ minHeight: '100vh', background: '#f5f5f5' }}>
@@ -210,18 +222,64 @@ export default function PortalPage() {
       </header>
 
       <main style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
-        {/* Active Jobs */}
-        <h2 style={{ fontSize: '1.125rem', fontWeight: 'bold', marginBottom: '1rem' }}>
-          My Jobs ({activeJobs.length})
-        </h2>
+        {/* Toast notification */}
+        {toast && (
+          <div style={{
+            position: 'fixed',
+            top: '1rem',
+            right: '1rem',
+            padding: '1rem 1.5rem',
+            borderRadius: '8px',
+            background: toast.type === 'success' ? '#dcfce7' : '#fef2f2',
+            color: toast.type === 'success' ? '#166534' : '#991b1b',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            zIndex: 1000,
+            animation: 'fadeIn 0.3s ease'
+          }}>
+            {toast.message}
+          </div>
+        )}
 
-        {activeJobs.length === 0 ? (
+        {/* Tabs */}
+        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+          <button
+            onClick={() => setActiveTab('active')}
+            style={{
+              padding: '0.5rem 1rem',
+              background: activeTab === 'active' ? '#2563eb' : '#e5e7eb',
+              color: activeTab === 'active' ? 'white' : '#374151',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontWeight: '500'
+            }}
+          >
+            Active ({activeJobs.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('completed')}
+            style={{
+              padding: '0.5rem 1rem',
+              background: activeTab === 'completed' ? '#2563eb' : '#e5e7eb',
+              color: activeTab === 'completed' ? 'white' : '#374151',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontWeight: '500'
+            }}
+          >
+            Completed ({completedJobs.length})
+          </button>
+        </div>
+
+        {/* Jobs based on tab */}
+        {displayedJobs.length === 0 ? (
           <div style={{ background: 'white', padding: '2rem', borderRadius: '8px', textAlign: 'center', color: '#6b7280' }}>
-            No active jobs assigned to you.
+            {activeTab === 'active' ? 'No active jobs assigned to you.' : 'No completed jobs yet.'}
           </div>
         ) : (
           <div style={{ display: 'grid', gap: '1rem' }}>
-            {activeJobs.map((a) => (
+            {displayedJobs.map((a) => (
               <div key={a.id} style={{ background: 'white', padding: '1.5rem', borderRadius: '8px', borderLeft: `4px solid ${a.status === 'in_progress' ? '#10b981' : '#2563eb'}` }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
@@ -286,25 +344,6 @@ export default function PortalPage() {
               </div>
             ))}
           </div>
-        )}
-
-        {/* Completed Jobs */}
-        {completedJobs.length > 0 && (
-          <>
-            <h2 style={{ fontSize: '1.125rem', fontWeight: 'bold', margin: '2rem 0 1rem' }}>
-              Completed ({completedJobs.length})
-            </h2>
-            <div style={{ display: 'grid', gap: '0.5rem' }}>
-              {completedJobs.map((a) => (
-                <div key={a.id} style={{ background: 'white', padding: '1rem', borderRadius: '8px', opacity: 0.7 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontWeight: '500' }}>{a.job?.title}</span>
-                    <span style={{ color: '#10b981', fontSize: '0.875rem' }}>✓ Completed</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </>
         )}
 
         {/* Progress Update Modal */}

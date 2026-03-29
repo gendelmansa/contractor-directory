@@ -43,6 +43,7 @@ export default function DashboardPage() {
   const [showAddContractor, setShowAddContractor] = useState(false);
   const [newJob, setNewJob] = useState({ title: '', description: '', address: '', scheduled_date: '', scheduled_time: '', priority: 'normal' });
   const [newContractor, setNewContractor] = useState({ email: '', name: '', skills: '' });
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -129,6 +130,8 @@ export default function DashboardPage() {
       setShowNewJob(false);
       setNewJob({ title: '', description: '', address: '', scheduled_date: '', scheduled_time: '', priority: 'normal' });
       loadDashboard(supabase, operator.id);
+      setToast({ message: 'Job created successfully', type: 'success' });
+      setTimeout(() => setToast(null), 3000);
     }
   };
 
@@ -136,6 +139,9 @@ export default function DashboardPage() {
     const supabase = getSupabaseClient();
     await supabase.from('job_assignments').insert({ job_id: jobId, contractor_id: contractorId, status: 'assigned' });
     loadDashboard(supabase, user.id);
+    const contractor = contractors.find(c => c.id === contractorId);
+    setToast({ message: `Assigned to ${contractor?.name || contractor?.email || 'contractor'}`, type: 'success' });
+    setTimeout(() => setToast(null), 3000);
   };
 
   const addContractor = async (e: React.FormEvent) => {
@@ -164,6 +170,8 @@ export default function DashboardPage() {
       setShowAddContractor(false);
       setNewContractor({ email: '', name: '', skills: '' });
       loadDashboard(supabase, operator.id);
+      setToast({ message: 'Contractor added', type: 'success' });
+      setTimeout(() => setToast(null), 3000);
     }
   };
 
@@ -193,6 +201,23 @@ export default function DashboardPage() {
       </header>
 
       <main style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
+        {/* Toast notification */}
+        {toast && (
+          <div style={{
+            position: 'fixed',
+            top: '1rem',
+            right: '1rem',
+            padding: '1rem 1.5rem',
+            borderRadius: '8px',
+            background: toast.type === 'success' ? '#dcfce7' : '#fef2f2',
+            color: toast.type === 'success' ? '#166534' : '#991b1b',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            zIndex: 1000
+          }}>
+            {toast.message}
+          </div>
+        )}
+
         {/* Stats */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
           <div style={{ background: 'white', padding: '1.5rem', borderRadius: '8px' }}>
