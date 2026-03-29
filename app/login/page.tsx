@@ -165,6 +165,17 @@ export default function LoginPage() {
             {isSignUp ? 'Sign In' : 'Sign Up'}
           </button>
         </p>
+
+        {!isSignUp && (
+          <p style={{ marginTop: '0.5rem', textAlign: 'center', fontSize: '0.875rem' }}>
+            <a
+              href="/signup"
+              style={{ background: 'none', border: 'none', color: '#2563eb', cursor: 'pointer', textDecoration: 'underline' }}
+            >
+              Create an account
+            </a>
+          </p>
+        )}
       </div>
     </div>
   );
